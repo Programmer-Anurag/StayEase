@@ -1,0 +1,47 @@
+services:
+  mongo:
+    image: mongo
+    ports:
+    - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: qwerty
+    volumes:
+      - mongo-data:/data/db
+  
+  mongo-express:
+    image: mongo-express
+    ports:
+    - "8081:8081"  
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: qwerty
+      ME_CONFIG_MONGODB_URL: mongodb://admin:qwerty@mongo:27017 
+
+  backend:
+    build: ./backend
+    container_name: stayease-backend
+    ports:
+    - "8080:8080"
+    environment:
+      mongoDB_URL: mongodb://admin:qwerty@mongo:27017
+      CLOUD_NAME: dutqt18yd
+      JWT_SECRET: "anuragyadav"
+    depends_on:
+    - mongo
+
+  frontend:
+    build: ./frontend
+    container_name: stayease-frontend
+    ports:
+     - "3000:80"
+    environment:
+      VITE_API_URL: http://localhost:8080
+      VITE_CLOUD_NAME: dutqt18yd
+      VITE_UPLOAD_PRESET: "listing"
+    depends_on:
+      - backend
+
+
+volumes:
+  mongo-data:
