@@ -28,14 +28,9 @@ return res.status(201).send({success:"review added successfully",newReview})
 
 
 
-export const destroyReview=async(req,res)=>{
-    let {id,reviewId}=req.params;
-    console.log(id);
-    
-   let result=await Listing.findByIdAndUpdate(id,{$pull:{reviews:reviewId}});
-   console.log(result);
-   
+export const destroyReview = async (req, res) => {
+    let { id, reviewId } = req.params;
+    await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
     await Review.findByIdAndDelete(reviewId);
-     req.flash("success","Review Deleted!");
-    res.redirect(`/listings/${id}`);
+    return res.status(200).json({ success: "Review Deleted!" });
 }

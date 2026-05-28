@@ -77,12 +77,11 @@ app.use("/",userRoute);
 //     next(new expressError(404, "page not found"));
 // });
 
-app.use((err,req,res,next)=>{
-    console.log(err);
-    
-    let {statusCode,errorMessage}=err;  
-    res.status(statusCode).render("listings/error.ejs",{errorMessage});
-    // res.status(statusCode).send(message);
+app.use((err, req, res, next) => {
+    console.error(err);
+    const statusCode = err.statusCode || 500;
+    const errorMessage = err.message || "Internal Server Error";
+    res.status(statusCode).json({ error: errorMessage });
 })
 
 app.listen(8080,"0.0.0.0",()=>{

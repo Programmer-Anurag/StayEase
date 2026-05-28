@@ -4,11 +4,8 @@ import jwt, { decode } from "jsonwebtoken"
 
 
 export const index = async (req, res) => {
-    const allListings = await Listing.find({});
-    // console.log(allListings);
+    const allListings = await Listing.find({}).populate("reviews");
     res.send(allListings);
-    // res.render("listings/index.ejs",{allListings});
-
 }
 
 

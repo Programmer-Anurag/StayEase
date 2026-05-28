@@ -43,12 +43,13 @@ export const isLoggedIn = (req, res, next) => {
 export const isAuthor = async (req, res, next) => {
     let { id, reviewId } = req.params;
     let review = await Review.findById(reviewId);
-    if (!review.author.equals(res.locals.currUser._id)) {
-        req.flash("error", "you did not  create  this review");
-        return res.redirect(`/listings/${id}`)
+    if (!review) {
+        return res.status(404).json({ error: "Review not found" });
+    }
+    if (!req.user || !review.author.equals(req.user.id)) {
+        return res.status(403).json({ error: "You did not create this review" });
     }
     next();
-
 }
 
 

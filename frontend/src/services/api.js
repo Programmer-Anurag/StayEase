@@ -25,9 +25,10 @@ export const getHotels = async () => {
 
 export const getHotelDetail = async (id) => {
     try {
+        const activeToken = localStorage.getItem("token");
         const res = await axios.get(`${BaseUrl}/listings/${id}`, {
             headers: {
-                "Authorization": `Bearer ${token}`
+                "Authorization": `Bearer ${activeToken}`
             }
         });
         return res;
