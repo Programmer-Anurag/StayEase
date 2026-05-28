@@ -135,10 +135,8 @@ export const updateListing = async (req, res) => {
 
 export const deleteListing = async (req, res) => {
     let { id } = req.params;
-    let deleteListing = await Listing.findByIdAndDelete(id);
-    req.flash("success", "Listing Deleted!");
-    res.redirect("/listings");
-
+    await Listing.findByIdAndDelete(id);
+    return res.status(200).json({ success: "Listing Deleted!" });
 }
 
 
