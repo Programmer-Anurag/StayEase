@@ -4,7 +4,7 @@ import { wrapAsync } from "../utils/wrapAsync.js";
 import { listingSchema,reviewschema } from "../schema.js";
 import { expressError } from "../utils/expressError.js";
 import { isLoggedIn } from "../middleware.js";
-import {deleteListing, index, postListing, showListing, updateListing} from "../controllers/listings.js"
+import {deleteListing, index, postListing, showListing, updateListing, seedRealHotels} from "../controllers/listings.js"
 
 
 
@@ -19,6 +19,9 @@ const validatelisting=(req,res,next)=>{
     }
 }
 
+
+//seed route
+router.post("/seed", wrapAsync(seedRealHotels));
 
 //index route
 router.route("/")

@@ -37,6 +37,21 @@ export const getHotelDetail = async (id) => {
     }
 }
 
+export const seedHotels = async (clearExisting = false) => {
+    try {
+        const activeToken = localStorage.getItem("token");
+        const res = await axios.post(`${BaseUrl}/listings/seed`, { clearExisting }, {
+            headers: {
+                "Authorization": `Bearer ${activeToken}`
+            }
+        });
+        return res;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
+
 
 
 

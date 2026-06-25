@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar.jsx";
 import HotelCard from "../components/HotelCard.jsx";
-import { getHotels } from "../services/api.js";
+import { getHotels, seedHotels } from "../services/api.js";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
@@ -20,21 +20,49 @@ function Hotels() {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
+    const [seeding, setSeeding] = useState(false);
+    const [showDevPanel, setShowDevPanel] = useState(false);
+    const [seedingResult, setSeedingResult] = useState(null);
+    const [errorMsg, setErrorMsg] = useState('');
+
+    const fetchData = async () => {
+      try {
+        const response = await getHotels();
+        setAllListings(response.data || []);
+        setFilteredListings(response.data || []);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
 
     useEffect(() => {
-       const fetchData = async () => {
-         try {
-           const response = await getHotels();
-           setAllListings(response.data || []);
-           setFilteredListings(response.data || []);
-         } catch (error) {
-           console.error(error);
-         } finally {
-           setLoading(false);
-         }
-       }
        fetchData();
     }, []);
+
+    const handleSeedDatabase = async (clearExisting = false) => {
+        try {
+            setSeeding(true);
+            setErrorMsg('');
+            setSeedingResult(null);
+            const response = await seedHotels(clearExisting);
+            if (response.data && response.data.success) {
+                setSeedingResult(response.data.details);
+                // Trigger reload
+                const reloadRes = await getHotels();
+                setAllListings(reloadRes.data || []);
+                setFilteredListings(reloadRes.data || []);
+            } else {
+                setErrorMsg(response.data?.message || "Failed to seed database");
+            }
+        } catch (error) {
+            console.error(error);
+            setErrorMsg(error.response?.data?.error || error.message || "Failed to seed database");
+        } finally {
+            setSeeding(false);
+        }
+    };
 
     // Handle Category & Search changes
     useEffect(() => {
@@ -120,9 +148,92 @@ function Hotels() {
               <div className="flex items-center justify-center h-96">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
               </div>
+            ) : allListings.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center px-4 max-w-md mx-auto">
+                <div className="text-6xl mb-6">🏔️</div>
+                <h3 className="text-xl font-bold font-display text-slate-800">No Stays Found</h3>
+                <p className="text-slate-500 text-sm mt-2 mb-8 leading-relaxed">
+                  Your database seems to be empty. Populate it with real Indian temple, heritage, and mountain properties to get started!
+                </p>
+                <button 
+                  onClick={() => handleSeedDatabase(true)} 
+                  disabled={seeding}
+                  className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 shadow-md shadow-indigo-100 hover:shadow-lg hover:shadow-indigo-200 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-75"
+                >
+                  {seeding ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Syncing Indian Stays...
+                    </>
+                  ) : (
+                    "Seed Real Indian Stays"
+                  )}
+                </button>
+              </div>
+            ) : filteredListings.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center px-4 max-w-md mx-auto">
+                <div className="text-5xl mb-4">🔍</div>
+                <h3 className="text-lg font-bold font-display text-slate-800">No matching search results</h3>
+                <p className="text-slate-500 text-sm mt-1">Try tweaking your search keywords or category filters.</p>
+              </div>
             ) : (
               <HotelCard listing={filteredListings} />
             )}
+
+            {/* Floating Dev Seeding Panel */}
+            <div className="fixed bottom-6 right-6 z-50">
+              {!showDevPanel ? (
+                <button 
+                  onClick={() => setShowDevPanel(true)}
+                  className="flex items-center gap-2 bg-slate-900/90 hover:bg-slate-900 backdrop-blur-xs text-white text-xs font-semibold py-2.5 px-4 rounded-full shadow-lg border border-slate-700/50 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                >
+                  🛠️ Dev Tools
+                </button>
+              ) : (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 w-72 max-w-xs space-y-4 animate-in slide-in-from-bottom-5 duration-300">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="font-bold text-xs text-slate-800 uppercase tracking-wider">StayEase Dev Panel</span>
+                    <button 
+                      onClick={() => setShowDevPanel(false)}
+                      className="text-slate-400 hover:text-slate-600 text-sm font-bold cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <p className="text-slate-500 text-[10px] leading-relaxed">
+                    Control the database state. Seeding pulls real stays (Varanasi, Agra, Jaipur, Manali, Leh, Munnar, etc.) using Google API or our zero-cost fallback database.
+                  </p>
+                  <div className="space-y-2">
+                    <button 
+                      onClick={() => handleSeedDatabase(false)}
+                      disabled={seeding}
+                      className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-semibold py-2 px-3 rounded-lg border border-indigo-100 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {seeding ? "Syncing..." : "Sync Real Stays (Append)"}
+                    </button>
+                    <button 
+                      onClick={() => handleSeedDatabase(true)}
+                      disabled={seeding}
+                      className="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold py-2 px-3 rounded-lg border border-amber-100 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {seeding ? "Re-building..." : "Clear & Re-seed Stays"}
+                    </button>
+                  </div>
+                  {seedingResult && (
+                    <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 text-[10px] space-y-1">
+                      <div className="font-semibold text-slate-700">Last Seeding Success:</div>
+                      <div className="text-slate-500">Source: <span className="font-medium text-slate-600">{seedingResult.source}</span></div>
+                      <div className="text-slate-500">Count: <span className="font-medium text-slate-600">{seedingResult.count} stays</span></div>
+                    </div>
+                  )}
+                  {errorMsg && (
+                    <div className="bg-red-50 border border-red-100 text-red-600 rounded-lg p-2.5 text-[10px] font-medium">
+                      {errorMsg}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
         </div>
     )
 }

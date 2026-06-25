@@ -49,7 +49,9 @@ export const loginUser = async (req, res) => {
     try {
         let { email, password } = req.body;
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({
+            $or: [{ email: email }, { username: email }]
+        });
         
         if (!user) {
             return res.status(200).send({

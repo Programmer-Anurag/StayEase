@@ -1,6 +1,7 @@
 
 import { Listing } from "../models/listing.js";
-import jwt, { decode } from "jsonwebtoken"
+import jwt, { decode } from "jsonwebtoken";
+import { seedRealHotelsData } from "../utils/seedRealHotels.js";
 
 
 export const index = async (req, res) => {
@@ -137,6 +138,25 @@ export const deleteListing = async (req, res) => {
     let { id } = req.params;
     await Listing.findByIdAndDelete(id);
     return res.status(200).json({ success: "Listing Deleted!" });
+}
+
+export const seedRealHotels = async (req, res) => {
+    try {
+        const { clearExisting } = req.body;
+        const result = await seedRealHotelsData(clearExisting === true);
+        return res.status(200).json({
+            success: true,
+            message: "Database seeded successfully with real hotel data",
+            details: result
+        });
+    } catch (error) {
+        console.error("Seeding controller error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to seed database with real hotels",
+            error: error.message
+        });
+    }
 }
 
 
