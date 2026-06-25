@@ -8,6 +8,7 @@ import ejsMate from "ejs-mate";
 import { listingRoute } from "./routes/listing.js";
 import { reviewRoute } from "./routes/review.js";
 import { userRoute } from "./routes/user.js";
+import { aiRoute } from "./routes/ai.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
@@ -33,6 +34,7 @@ app.get("/", (req, res) => {
 app.use("/listings",listingRoute)
 app.use("/listings/:id/reviews",reviewRoute);
 app.use("/",userRoute);
+app.use("/ai",aiRoute);
 
 // app.use((req, res, next) => {
 //     next(new expressError(404, "page not found"));

@@ -1,7 +1,7 @@
 import { PhotoIcon } from '@heroicons/react/24/solid'
 import { ChevronDownIcon } from '@heroicons/react/16/solid'
 import { useState, useEffect } from 'react'
-import { BaseUrl } from '../../services/api'
+import { BaseUrl, generateAIDescription } from '../../services/api'
 import { toast } from 'sonner'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
@@ -17,6 +17,35 @@ export default function EditForm({ viewHotel }) {
     })
     const [file, setFile] = useState(null)
     const [loading, setLoading] = useState(false)
+    const [aiKeywords, setAiKeywords] = useState("")
+    const [aiGenerating, setAiGenerating] = useState(false)
+
+    async function handleGenerateDescription() {
+        if (!listingData.title || !listingData.location) {
+            toast.warning("Please enter a Title and Location first to help Gemini write a matching description.")
+            return
+        }
+        if (!aiKeywords.trim()) {
+            toast.warning("Please provide some highlights/keywords (e.g. pool, balcony, luxury).")
+            return
+        }
+
+        setAiGenerating(true)
+        try {
+            const response = await generateAIDescription(listingData.title, listingData.location, aiKeywords)
+            if (response.data && response.data.success) {
+                setListingData(prev => ({ ...prev, description: response.data.text }))
+                toast.success("AI Description generated successfully!")
+            } else {
+                toast.error(response.data?.message || "Failed to generate AI description.")
+            }
+        } catch (error) {
+            console.error(error)
+            toast.error(error.response?.data?.message || error.message || "Failed to connect to AI server.")
+        } finally {
+            setAiGenerating(false)
+        }
+    }
 
     const cloud_name = import.meta.env.VITE_CLOUD_NAME
     const upload_preset = import.meta.env.VITE_UPLOAD_PRESET
@@ -159,9 +188,31 @@ export default function EditForm({ viewHotel }) {
 
                     {/* Description */}
                     <div>
-                        <label htmlFor="description" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                            Description
-                        </label>
+                        <div className="flex items-center justify-between mb-2">
+                            <label htmlFor="description" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                Description
+                            </label>
+                            
+                            {/* AI Description Assistant */}
+                            <div className="flex items-center gap-1.5 bg-indigo-50/75 border border-indigo-100/80 rounded-lg p-1">
+                                <input 
+                                    type="text" 
+                                    placeholder="Keywords: pool, views, cozy" 
+                                    value={aiKeywords}
+                                    onChange={(e) => setAiKeywords(e.target.value)}
+                                    disabled={loading || aiGenerating}
+                                    className="bg-transparent border-none text-[11px] text-slate-700 placeholder-slate-400 focus:outline-hidden w-40 p-1"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateDescription}
+                                    disabled={loading || aiGenerating}
+                                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] py-1 px-2.5 rounded-md shadow-xs active:scale-95 transition-all cursor-pointer whitespace-nowrap disabled:opacity-50"
+                                >
+                                    {aiGenerating ? "Generating..." : "✨ AI Generate"}
+                                </button>
+                            </div>
+                        </div>
                         <textarea
                             id="description"
                             name="description"

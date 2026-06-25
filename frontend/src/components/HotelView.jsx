@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { StarIcon, TrashIcon } from '@heroicons/react/20/solid'
 import ReviewForm from './Form/ReviewForm'
 import axios from 'axios'
-import { BaseUrl } from '../services/api'
+import { BaseUrl, summarizeAIReviews } from '../services/api'
 import { toast } from 'sonner'
 
 function classNames(...classes) {
@@ -12,8 +12,32 @@ function classNames(...classes) {
 
 function HotelView({ viewHotel }) {
   const navigate = useNavigate()
-  // Correctly destructure useState
   const [reviews, setReviews] = useState(viewHotel?.listing?.reviews || [])
+  const [aiSummary, setAiSummary] = useState("")
+  const [summarizing, setSummarizing] = useState(false)
+  const [aiSummaryError, setAiSummaryError] = useState("")
+
+  const handleSummarizeReviews = async () => {
+    if (reviews.length === 0) return
+
+    try {
+      setSummarizing(true)
+      setAiSummaryError("")
+      setAiSummary("")
+      const response = await summarizeAIReviews(reviews)
+      if (response.data && response.data.success) {
+        setAiSummary(response.data.summary)
+        toast.success("Reviews summarized successfully!")
+      } else {
+        setAiSummaryError(response.data?.message || "Failed to summarize reviews")
+      }
+    } catch (error) {
+      console.error(error)
+      setAiSummaryError(error.response?.data?.message || error.message || "Failed to connect to AI server")
+    } finally {
+      setSummarizing(false)
+    }
+  }
 
   const listing = viewHotel?.listing || {}
   const owner = listing.owner || {}
@@ -207,12 +231,58 @@ function HotelView({ viewHotel }) {
 
         {/* Reviews Section */}
         <div className="mt-16 pt-12 border-t border-slate-200/80">
-          <div className="flex items-center gap-2 mb-8">
-            <StarIcon className="h-6 w-6 text-amber-500" />
-            <h2 className="text-2xl font-bold text-slate-900 font-display">
-              {hasReviews ? `${avgRating.toFixed(1)} • ${reviews.length} reviews` : "New Stay • No reviews yet"}
-            </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-2">
+              <StarIcon className="h-6 w-6 text-amber-500" />
+              <h2 className="text-2xl font-bold text-slate-900 font-display">
+                {hasReviews ? `${avgRating.toFixed(1)} • ${reviews.length} reviews` : "New Stay • No reviews yet"}
+              </h2>
+            </div>
+
+            {hasReviews && (
+              <button
+                onClick={handleSummarizeReviews}
+                disabled={summarizing}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100/80 text-indigo-600 border border-indigo-100/80 px-4 py-2.5 text-xs font-semibold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {summarizing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-indigo-600 border-t-transparent"></div>
+                    Summarizing Reviews...
+                  </>
+                ) : (
+                  "✨ Summarize Reviews with Gemini AI"
+                )}
+              </button>
+            )}
           </div>
+
+          {/* AI Summary Display */}
+          {summarizing && (
+            <div className="mb-8 p-6 bg-indigo-50/20 border border-indigo-100/40 rounded-2xl animate-pulse space-y-3">
+              <div className="h-4 bg-indigo-200/50 rounded w-1/4"></div>
+              <div className="h-3 bg-indigo-100/50 rounded w-3/4"></div>
+              <div className="h-3 bg-indigo-100/50 rounded w-2/3"></div>
+            </div>
+          )}
+
+          {aiSummary && (
+            <div className="mb-8 p-6 bg-gradient-to-br from-indigo-50/50 to-indigo-50/10 border border-indigo-100/80 rounded-2xl shadow-xs">
+              <div className="flex items-center gap-1.5 text-indigo-700 font-bold font-display text-sm mb-3">
+                <span>✨</span>
+                <span>Gemini AI Review Summary</span>
+              </div>
+              <div className="text-slate-600 text-sm leading-relaxed whitespace-pre-line font-sans">
+                {aiSummary}
+              </div>
+            </div>
+          )}
+
+          {aiSummaryError && (
+            <div className="mb-8 p-4 bg-red-50 border border-red-100 text-red-600 text-xs rounded-xl font-medium">
+              ⚠️ {aiSummaryError}
+            </div>
+          )}
 
           {reviews.length === 0 ? (
             <div className="bg-white border border-dashed border-slate-200 p-8 rounded-2xl text-center text-slate-500">
