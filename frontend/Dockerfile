@@ -18,6 +18,14 @@ RUN npm ci
 # Copy client source code
 COPY . .
 
+# Build arguments for Vite environment variables
+ARG VITE_API_URL=http://localhost:8080
+ARG VITE_CLOUD_NAME=dutqt18yd
+ARG VITE_UPLOAD_PRESET=listing
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_CLOUD_NAME=$VITE_CLOUD_NAME
+ENV VITE_UPLOAD_PRESET=$VITE_UPLOAD_PRESET
+
 # Build production bundle (Vite outputs to /app/dist)
 RUN npm run build
 

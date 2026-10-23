@@ -1,6 +1,6 @@
 services:
   mongo:
-    image: mongo:7-jammy
+    image: mongo:latest
     container_name: stayease-mongo
     restart: unless-stopped
     ports:
@@ -12,7 +12,7 @@ services:
       - mongo-data:/data/db
 
   mongo-express:
-    image: mongo-express:1.0.2-alpha.4
+    image: mongo-express:latest
     container_name: stayease-mongo-express
     restart: unless-stopped
     ports:
@@ -32,12 +32,12 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
+    env_file:
+      - ./backend/.env
     environment:
       PORT: 8080
       NODE_ENV: production
       mongoDB_URL: mongodb://admin:qwerty@mongo:27017/StayEase?authSource=admin
-      JWT_SECRET: "anuragyadav"
-      CLOUD_NAME: dutqt18yd
     depends_on:
       - mongo
 
@@ -45,14 +45,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8080
+        VITE_CLOUD_NAME: dutqt18yd
+        VITE_UPLOAD_PRESET: "listing"
     container_name: stayease-frontend
     restart: unless-stopped
     ports:
       - "3000:80"
-    environment:
-      VITE_API_URL: http://localhost:8080
-      VITE_CLOUD_NAME: dutqt18yd
-      VITE_UPLOAD_PRESET: "listing"
     depends_on:
       - backend
 
