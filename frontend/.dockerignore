@@ -1,0 +1,21 @@
+# Dependency caches & local installs
+node_modules
+npm-debug.log*
+yarn-debug.log*
+
+# Build artifacts
+dist
+
+# Environment & Local files
+.env
+.env.*
+.DS_Store
+
+# Git metadata
+.git
+.gitignore
+
+# Docker & CI files
+Dockerfile*
+.dockerignore
+.github
