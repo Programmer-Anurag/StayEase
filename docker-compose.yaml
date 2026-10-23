@@ -1,47 +1,60 @@
 services:
   mongo:
-    image: mongo
+    image: mongo:latest
+    container_name: stayease-mongo
+    restart: unless-stopped
     ports:
-    - "27017:27017"
+      - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: qwerty
     volumes:
       - mongo-data:/data/db
-  
+
   mongo-express:
-    image: mongo-express
+    image: mongo-express:latest
+    container_name: stayease-mongo-express
+    restart: unless-stopped
     ports:
-    - "8081:8081"  
+      - "8081:8081"  
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: admin
       ME_CONFIG_MONGODB_ADMINPASSWORD: qwerty
-      ME_CONFIG_MONGODB_URL: mongodb://admin:qwerty@mongo:27017 
+      ME_CONFIG_MONGODB_URL: mongodb://admin:qwerty@mongo:27017/?authSource=admin
+    depends_on:
+      - mongo
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: stayease-backend
+    restart: unless-stopped
     ports:
-    - "8080:8080"
+      - "8080:8080"
+    env_file:
+      - ./backend/.env
     environment:
-      mongoDB_URL: mongodb://admin:qwerty@mongo:27017
-      CLOUD_NAME: dutqt18yd
-      JWT_SECRET: "anuragyadav"
+      PORT: 8080
+      NODE_ENV: production
+      mongoDB_URL: mongodb://admin:qwerty@mongo:27017/StayEase?authSource=admin
     depends_on:
-    - mongo
+      - mongo
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8080
+        VITE_CLOUD_NAME: dutqt18yd
+        VITE_UPLOAD_PRESET: "listing"
     container_name: stayease-frontend
+    restart: unless-stopped
     ports:
-     - "3000:80"
-    environment:
-      VITE_API_URL: http://localhost:8080
-      VITE_CLOUD_NAME: dutqt18yd
-      VITE_UPLOAD_PRESET: "listing"
+      - "3000:80"
     depends_on:
       - backend
-
 
 volumes:
   mongo-data:

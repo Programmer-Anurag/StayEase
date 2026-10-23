@@ -6,10 +6,6 @@ import axios from 'axios'
 import { BaseUrl, summarizeAIReviews } from '../services/api'
 import { toast } from 'sonner'
 
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ')
-}
-
 function HotelView({ viewHotel }) {
   const navigate = useNavigate()
   const [reviews, setReviews] = useState(viewHotel?.listing?.reviews || [])
